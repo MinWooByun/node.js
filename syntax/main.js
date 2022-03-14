@@ -3,7 +3,7 @@ let fs = require("fs");
 let url = require("url");
 // let qs = require("querystring");
 
-const templateHTML = (title, list, body) => {
+const templateHTML = (title, list, body, control) => {
   return `
   <!DOCTYPE html>
   <html>
@@ -14,7 +14,7 @@ const templateHTML = (title, list, body) => {
   <body>
     <h1><a href="/">WEB</a></h1>
     ${list}
-    <a href="/create">create</a>
+    ${control}
     ${body}
   </body>
   </html>
@@ -45,7 +45,8 @@ let app = http.createServer(function (request, response) {
         let template = templateHTML(
           title,
           list,
-          `<h2>${title}</h2>${description}`
+          `<h2>${title}</h2>${description}`,
+          `<a href="/create">create</a>`
         );
         // 200은 성공적으로 접속됨
         response.writeHead(200);
@@ -59,7 +60,13 @@ let app = http.createServer(function (request, response) {
           let template = templateHTML(
             title,
             list,
-            `<h2>${title}</h2>${description}`
+            `<h2>${title}</h2>${description}`,
+            `<a href="/create">create</a>
+             <a href="/update?id=${title}">update</a>
+             <form action="/delete_process" method="post">
+              <input type="hidden" name="id" value="${title}"/>
+              <input type="submit" value="delete"/>
+             </form>`
           );
           // 200은 성공적으로 접속됨
           response.writeHead(200);
@@ -74,13 +81,14 @@ let app = http.createServer(function (request, response) {
       let template = templateHTML(
         title,
         list,
-        `<form action="http://localhost:3000/create_process" method="post">
+        `<form action="/create_process" method="post">
           <p><input type="text" name="title" placeholder="title"/></p>
           <p>
             <textarea name="description" placeholder="discription"></textarea>
           </p>
           <p><input type="submit"/></p>
-         </form>`
+         </form>`,
+        ""
       );
       // 200은 성공적으로 접속됨
       response.writeHead(200);
@@ -91,6 +99,7 @@ let app = http.createServer(function (request, response) {
 
     request.on("data", (data) => {
       body += data;
+      console.log(body);
     });
 
     request.on("end", () => {
@@ -100,6 +109,64 @@ let app = http.createServer(function (request, response) {
       fs.writeFile(`../data/${title}`, description, "utf8", (err) => {
         // 302는 리다이렉션이다.
         response.writeHead(302, { Location: `/?id=${title}` });
+        response.end();
+      });
+    });
+  } else if (pathName === "/update") {
+    fs.readdir("../data", (err, fileList) => {
+      fs.readFile(`../data/${queryData.id}`, "utf8", (err, description) => {
+        let title = queryData.id;
+        let list = templateList(fileList);
+        let template = templateHTML(
+          title,
+          list,
+          `<form action="/update_process" method="post">
+            <input type="hidden" name="id" value="${title}"/>
+            <p><input type="text" name="title" placeholder="title" value="${title}"/></p>
+            <p>
+              <textarea name="description" placeholder="discription">${description}</textarea>
+            </p>
+            <p><input type="submit"/></p>
+           </form>`,
+          `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+        );
+        // 200은 성공적으로 접속됨
+        response.writeHead(200);
+        response.end(template);
+      });
+    });
+  } else if (pathName === "/update_process") {
+    let body = "";
+
+    request.on("data", (data) => {
+      body += data;
+    });
+
+    request.on("end", () => {
+      // let post = qs.parse(body);
+      let id = new URLSearchParams(body).get("id");
+      let title = new URLSearchParams(body).get("title");
+      let description = new URLSearchParams(body).get("description");
+      fs.rename(`../data/${id}`, `../data/${title}`, (err) => {
+        fs.writeFile(`../data/${title}`, description, "utf8", (err) => {
+          // 302는 리다이렉션이다.
+          response.writeHead(302, { Location: `/?id=${title}` });
+          response.end();
+        });
+      });
+    });
+  } else if (pathName === "/delete_process") {
+    let body = "";
+
+    request.on("data", (data) => {
+      body += data;
+    });
+
+    request.on("end", () => {
+      // let post = qs.parse(body);
+      let id = new URLSearchParams(body).get("id");
+      fs.unlink(`../data/${id}`, (err) => {
+        response.writeHead(302, { Location: `/` });
         response.end();
       });
     });
