@@ -3,32 +3,7 @@ let fs = require("fs");
 let url = require("url");
 // let qs = require("querystring");
 
-const templateHTML = (title, list, body, control) => {
-  return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>WEB1 - ${title}</title>
-    <meta charset="utf-8" />
-  </head>
-  <body>
-    <h1><a href="/">WEB</a></h1>
-    ${list}
-    ${control}
-    ${body}
-  </body>
-  </html>
-`;
-};
-
-const templateList = (fileList) => {
-  let list = "<ul>";
-  for (let i = 0; i < fileList.length; i++) {
-    list += `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
-  }
-  list += "</ul>";
-  return list;
-};
+let template = require("../lib/template.js");
 
 let app = http.createServer(function (request, response) {
   let _url = request.url;
@@ -41,8 +16,9 @@ let app = http.createServer(function (request, response) {
       fs.readdir("../data", (err, fileList) => {
         let title = "Welcome";
         let description = "Hello, Node.js";
-        let list = templateList(fileList);
-        let template = templateHTML(
+
+        let list = template.list(fileList);
+        let html = template.html(
           title,
           list,
           `<h2>${title}</h2>${description}`,
@@ -50,14 +26,14 @@ let app = http.createServer(function (request, response) {
         );
         // 200은 성공적으로 접속됨
         response.writeHead(200);
-        response.end(template);
+        response.end(html);
       });
     } else {
       fs.readdir("../data", (err, fileList) => {
         fs.readFile(`../data/${queryData.id}`, "utf8", (err, description) => {
           let title = queryData.id;
-          let list = templateList(fileList);
-          let template = templateHTML(
+          let list = template.list(fileList);
+          let html = template.html(
             title,
             list,
             `<h2>${title}</h2>${description}`,
@@ -70,15 +46,15 @@ let app = http.createServer(function (request, response) {
           );
           // 200은 성공적으로 접속됨
           response.writeHead(200);
-          response.end(template);
+          response.end(html);
         });
       });
     }
   } else if (pathName === "/create") {
     fs.readdir("../data", (err, fileList) => {
       let title = "WEB - create";
-      let list = templateList(fileList);
-      let template = templateHTML(
+      let list = template.list(fileList);
+      let html = template.html(
         title,
         list,
         `<form action="/create_process" method="post">
@@ -92,7 +68,7 @@ let app = http.createServer(function (request, response) {
       );
       // 200은 성공적으로 접속됨
       response.writeHead(200);
-      response.end(template);
+      response.end(html);
     });
   } else if (pathName === "/create_process") {
     let body = "";
@@ -116,8 +92,8 @@ let app = http.createServer(function (request, response) {
     fs.readdir("../data", (err, fileList) => {
       fs.readFile(`../data/${queryData.id}`, "utf8", (err, description) => {
         let title = queryData.id;
-        let list = templateList(fileList);
-        let template = templateHTML(
+        let list = template.list(fileList);
+        let html = template.html(
           title,
           list,
           `<form action="/update_process" method="post">
@@ -132,7 +108,7 @@ let app = http.createServer(function (request, response) {
         );
         // 200은 성공적으로 접속됨
         response.writeHead(200);
-        response.end(template);
+        response.end(html);
       });
     });
   } else if (pathName === "/update_process") {
