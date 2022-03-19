@@ -1,26 +1,26 @@
-let http = require("http");
-let fs = require("fs");
-let url = require("url");
-let path = require("path");
-let sanitizeHtml = require("sanitize-html");
-// let qs = require("querystring");
+const http = require("http");
+const fs = require("fs");
+const url = require("url");
+const path = require("path");
+const sanitizeHtml = require("sanitize-html");
+// const qs = require("querystring");
 
-let template = require("../lib/template.js");
+const template = require("../lib/template.js");
 
-let app = http.createServer(function (request, response) {
-  let _url = request.url;
-  let queryData = url.parse(_url, true).query;
-  let pathName = url.parse(_url, true).pathname;
+const app = http.createServer(function (request, response) {
+  const _url = request.url;
+  const queryData = url.parse(_url, true).query;
+  const pathName = url.parse(_url, true).pathname;
 
   if (pathName === "/") {
     // 홈페이지인가를 판별
     if (queryData.id === undefined) {
       fs.readdir("../data", (err, fileList) => {
-        let title = "Welcome";
-        let description = "Hello, Node.js";
+        const title = "Welcome";
+        const description = "Hello, Node.js";
 
-        let list = template.list(fileList);
-        let html = template.html(
+        const list = template.list(fileList);
+        const html = template.html(
           title,
           list,
           `<h2>${title}</h2>${description}`,
@@ -33,16 +33,16 @@ let app = http.createServer(function (request, response) {
     } else {
       fs.readdir("../data", (err, fileList) => {
         // path를 쓰는 이유는 url를 조작하여 ..을 붙여 계속해서 상위폴더에 접근해 정보를 빼낼 수도 있기 때문이다.
-        let filteredId = path.parse(queryData.id).base;
+        const filteredId = path.parse(queryData.id).base;
         fs.readFile(`../data/${filteredId}`, "utf8", (err, description) => {
-          let title = queryData.id;
+          const title = queryData.id;
           // sanitize-html을 쓰는 이유는 작성자가 악의적으로 script 태그등을 기입하여 마음대로 조작할 수도 있기 때문이다.
-          let sanitizedTitle = sanitizeHtml(title);
-          let sanitizeDescription = sanitizeHtml(description, {
+          const sanitizedTitle = sanitizeHtml(title);
+          const sanitizeDescription = sanitizeHtml(description, {
             allowedTags: ["h1"],
           });
-          let list = template.list(fileList);
-          let html = template.html(
+          const list = template.list(fileList);
+          const html = template.html(
             sanitizedTitle,
             list,
             `<h2>${sanitizedTitle}</h2>${sanitizeDescription}`,
@@ -61,9 +61,9 @@ let app = http.createServer(function (request, response) {
     }
   } else if (pathName === "/create") {
     fs.readdir("../data", (err, fileList) => {
-      let title = "WEB - create";
-      let list = template.list(fileList);
-      let html = template.html(
+      const title = "WEB - create";
+      const list = template.list(fileList);
+      const html = template.html(
         title,
         list,
         `<form action="/create_process" method="post">
@@ -80,7 +80,7 @@ let app = http.createServer(function (request, response) {
       response.end(html);
     });
   } else if (pathName === "/create_process") {
-    let body = "";
+    const body = "";
 
     request.on("data", (data) => {
       body += data;
@@ -88,9 +88,9 @@ let app = http.createServer(function (request, response) {
     });
 
     request.on("end", () => {
-      // let post = qs.parse(body);
-      let title = new URLSearchParams(body).get("title");
-      let description = new URLSearchParams(body).get("description");
+      // const post = qs.parse(body);
+      const title = new URLSearchParams(body).get("title");
+      const description = new URLSearchParams(body).get("description");
       fs.writeFile(`../data/${title}`, description, "utf8", (err) => {
         // 302는 리다이렉션이다.
         response.writeHead(302, { Location: `/?id=${title}` });
@@ -99,11 +99,11 @@ let app = http.createServer(function (request, response) {
     });
   } else if (pathName === "/update") {
     fs.readdir("../data", (err, fileList) => {
-      let filteredId = path.parse(queryData.id).base;
+      const filteredId = path.parse(queryData.id).base;
       fs.readFile(`../data/${filteredId}`, "utf8", (err, description) => {
-        let title = queryData.id;
-        let list = template.list(fileList);
-        let html = template.html(
+        const title = queryData.id;
+        const list = template.list(fileList);
+        const html = template.html(
           title,
           list,
           `<form action="/update_process" method="post">
@@ -122,17 +122,17 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathName === "/update_process") {
-    let body = "";
+    const body = "";
 
     request.on("data", (data) => {
       body += data;
     });
 
     request.on("end", () => {
-      // let post = qs.parse(body);
-      let id = new URLSearchParams(body).get("id");
-      let title = new URLSearchParams(body).get("title");
-      let description = new URLSearchParams(body).get("description");
+      // const post = qs.parse(body);
+      const id = new URLSearchParams(body).get("id");
+      const title = new URLSearchParams(body).get("title");
+      const description = new URLSearchParams(body).get("description");
       fs.rename(`../data/${id}`, `../data/${title}`, (err) => {
         fs.writeFile(`../data/${title}`, description, "utf8", (err) => {
           // 302는 리다이렉션이다.
@@ -142,16 +142,16 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathName === "/delete_process") {
-    let body = "";
+    const body = "";
 
     request.on("data", (data) => {
       body += data;
     });
 
     request.on("end", () => {
-      // let post = qs.parse(body);
-      let id = new URLSearchParams(body).get("id");
-      let filteredId = path.parse(id).base;
+      // const post = qs.parse(body);
+      const id = new URLSearchParams(body).get("id");
+      const filteredId = path.parse(id).base;
       fs.unlink(`../data/${filteredId}`, (err) => {
         response.writeHead(302, { Location: `/` });
         response.end();
